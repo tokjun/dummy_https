@@ -62,7 +62,9 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND, "File not found")
             return None
 
-        ctype = self.guess_type(path)
+        ctype = self.guess_type('templates/template.html')
+
+        #print("Request: ", self.path)
 
         try:
             fs = os.fstat(f.fileno())
@@ -85,6 +87,6 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 httpd = http.server.ThreadingHTTPServer(server_address, CORSHTTPRequestHandler)
 ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ctx.check_hostname = False
-ctx.load_cert_chain(certfile='snakeoil.pem', keyfile='snakeoil.key', password=None)  # with key inside
+ctx.load_cert_chain(certfile='dummy.pem', keyfile='dummy.key', password=None)  # with key inside
 httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
 httpd.serve_forever()
