@@ -16,14 +16,14 @@ import ssl
 import os
 import zlib
 
-server_address = ('127.0.0.1', 4443)
-
-
 hostname = 'localhost'
 local_ip = socket.gethostbyname(hostname)
+local_port = 7787
 
-print("Open https://{hostname}:4443/samples/idengine_sample_wasm/sample.html")
-print(f'Open https://{local_ip}:4443/samples/idengine_sample_wasm/sample.html')
+server_address = (local_ip, local_port)
+
+print(f"Open https://{hostname}:{local_port}/samples/idengine_sample_wasm/sample.html")
+print(f'Open https://{local_ip}:{local_port}/samples/idengine_sample_wasm/sample.html')
 
 class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     extensions_map = {
@@ -42,7 +42,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         """Serve a GET request."""
-        if f := self.send_head():
+        if f := self.send_reply():
             try:
                 if hasattr(f, "read"):
                     self.copyfile(f, self.wfile)
@@ -52,12 +52,27 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             finally:
                 f.close()
 
-    def send_head(self):
+    def do_POST(self):
+        """Serve a POST request."""
+        if f := self.send_reply():
+            try:
+                if hasattr(f, "read"):
+                    self.copyfile(f, self.wfile)
+                else:
+                    for data in f:
+                        self.wfile.write(data)
+            finally:
+                f.close()
+
+    def send_reply(self):
         # The server send back a template.html regardless of the requested path.
         path = self.translate_path(self.path)
         f = None
         try:
-            f = open('templates/template.html', 'rb')
+            if self.path == '/SRC/v2/product/authorization/register':
+                f = open('templates/registration_response.json', 'rb')
+            else:
+                f = open('templates/default.html', 'rb')
         except OSError:
             self.send_error(HTTPStatus.NOT_FOUND, "File not found")
             return None
